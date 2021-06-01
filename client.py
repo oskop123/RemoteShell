@@ -1,14 +1,18 @@
 import socket
+import sys
 
 HOST = 'localhost'
 PORT = 5000
 
 print(f"Connect to {HOST}:{PORT}")
+print(sys.argv)
+
+cmd = sys.argv[1] if len(sys.argv) > 1 else "ls"
 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
-    s.send(b'ls')
+    s.send(bytes(cmd, 'utf-8'))
     data = s.recv(4096)
     print('Received:', repr(data))
 
