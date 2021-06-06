@@ -8,45 +8,51 @@ PORT = 5000
 
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
-try:
-    epoll = select.epoll()
+epoll = select.epoll()
 
-    s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+listen_sockets = [
+    socket.socket(socket.AF_INET6, socket.SOCK_STREAM),
+    socket.socket(socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_SCTP)
+]
 
-    s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+for sock in listen_sockets:
+    sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    s.bind((HOST, PORT))
-    s.listen()
+    sock.bind((HOST, PORT))
+    sock.listen()
 
-    epoll.register(s, select.POLLIN)
+    epoll.register(sock, select.EPOLLIN)
 
-    while True:
-        desc_list = epoll.poll()
-        for fd, event in desc_list:
-            if fd == s.fileno():
-                conn, _ = s.accept()
-                epoll.register(conn, select.POLLIN)
+LISTEN_SOCKETS = {s.fileno(): s for s in listen_sockets}
+CONN = {}
+
+while True:
+    descriptors_list = epoll.poll()
+    for fd, event in descriptors_list:
+        if fd in map(lambda sock: sock.fileno(), listen_sockets):
+            conn, _ = LISTEN_SOCKETS[fd].accept()
+            epoll.register(conn, select.EPOLLIN)
+            CONN[conn.fileno()] = conn
+        elif event & select.EPOLLIN:
+            recv_data = CONN[fd].recv(100)
+
+            if not recv_data:
+                epoll.unregister(CONN[fd])
+                CONN[fd].close()
+                CONN.pop(fd)
                 continue
-            if event == select.POLLIN:
-                cn = socket.socket(fileno=fd)
-                recv_data = cn.recv(4096)
 
-                print(recv_data)
+            read_side, write_side = os.pipe()
 
-                read_side, write_side = os.pipe()
-
-                if os.fork():
-                    cn.send(os.read(read_side, 100))
-                    epoll.unregister(cn)
-                else:
-                    os.dup2(write_side, 1)
-                    os.execl("/bin/sh", "sh", "-c", recv_data)
-
-except OSError as e:
-    print("Socket error({0}): {1}".format(e.errno, e.strerror))
-
-except KeyboardInterrupt:
-    print("Closing server")
-    conn.close()
-    s.close()
+            if os.fork():
+                os.close(write_side)
+                CONN[fd].send(os.read(read_side, 100))
+                os.close(read_side)
+                epoll.modify(CONN[fd], select.EPOLLIN)
+            else:
+                for i in listen_sockets:
+                    i.close()
+                os.close(read_side)
+                os.dup2(write_side, 1)
+                os.execl("/bin/sh", "sh", "-c", recv_data)
