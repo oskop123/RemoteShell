@@ -7,4 +7,3 @@ grep
 echo
 pwd
 which
-cd

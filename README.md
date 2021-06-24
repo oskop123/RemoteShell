@@ -22,9 +22,8 @@ There are two scripts that allow for communication:
 
 Default `HOST` and `PORT` values, that server is bound to, are:
 
-`HOST`: '' => '0.0.0.0' for IPv4 or '*' for IPv6
-
-`PORT`: 5001
+- `HOST`: `''` => `0.0.0.0` for IPv4 or `*` for IPv6
+- `PORT`: `5001`
 
 ```
 usage: server.py [-h] [-c ALLOWED_COMMANDS] [-4] [-6] [-D] [-u AS_USER]

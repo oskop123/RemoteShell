@@ -90,8 +90,12 @@ def handle_request(
 
 	if permit:
 		try:
-			os.dup2(write_side, 1)
-			os.execl("/bin/sh", "sh", "-c", recv_data)
+			sys.stderr.flush()
+			sys.stdout.flush()
+			os.dup2(write_side, sys.stdout.fileno())
+			os.dup2(write_side, sys.stderr.fileno())
+			# os.execl("/bin/sh", "sh", "-ce", recv_data)
+			os.system(recv_data)
 		except OSError as e:
 			logger.error(f'os.execl() error ({e.errno}): {e.strerror}')
 			os.write(write_side, b'Error during execution')

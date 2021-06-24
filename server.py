@@ -11,14 +11,15 @@ from typing import Union
 from utils import daemon_init, handle_request
 
 
-def server(name: str,
-           host: str,
-           port: Union[str, int],
-		   commands_path: str,
-           ipv4_only: bool = False,
-           ipv6_only: bool = False,
-           daemonize: bool = False,
-           user: str = os.getlogin(),
+def server(
+	name: str,
+	host: str,
+	port: Union[str, int],
+	commands_path: str,
+	ipv4_only: bool = False,
+	ipv6_only: bool = False,
+	daemonize: bool = False,
+	user: str = os.getlogin(),
 ):
 	"""Main program to run server
 
@@ -197,8 +198,8 @@ if __name__ == "__main__":
                     	help="run server only for IPv6",
 						action='store_true')
 	parser.add_argument('-D', '--daemonize',
-		help="daemonize server program",
-		action='store_true')
+						help="daemonize server program",
+						action='store_true')
 	parser.add_argument('-u', '--as-user',
 						default='student',
 						help='run as user (UID, GID, EUID, EGID); only if daemonized; defaults to "student"')
@@ -210,8 +211,6 @@ if __name__ == "__main__":
 						help='server port or service name; defaults to "5001"')
 	arguments = parser.parse_args()
 
-	base_path = os.path.dirname(os.path.abspath(__name__))
-	
 	server(
     	os.path.basename(sys.argv[0]),
         arguments.host,

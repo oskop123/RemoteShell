@@ -54,6 +54,8 @@ def client(
 	# Define socket
 	try:
 		sock = socket.socket(family, socket.SOCK_STREAM, transport_protocol)
+		sock.setblocking(True)
+		sock.settimeout(timeout)
 	except OSError as e:
 		print(f"socket() error ({e.errno}): {e.strerror}")
 		return -2
@@ -65,6 +67,8 @@ def client(
 	except OSError as e:
 		print(f"connect() error ({e.errno}): {e.strerror}")
 		return -3
+
+	print("Press: Ctrl+D to safely exit, Ctrl+C to interrupt")
 
 	# Remote shell endless loop
 	try:
@@ -79,16 +83,16 @@ def client(
 			try:
 				data = sock.recv(buffer_size)
 				if len(data) == 0:
-					break
+					continue
 				print(data.decode('utf-8'))
 
+			except socket.timeout as e:
+				print("Request timeout..")
+			
 			except OSError as e:
-				print(f"sendall() error({e.errno}): {e.strerror}")
+				print(f"recv() error({e.errno}): {e.strerror}")
 				return -3
 
-			except socket.timeout as e:
-				print("Command execution timeout")
-				break
 				
 	except KeyboardInterrupt:
 		print(" Keyboard Interrupt")
