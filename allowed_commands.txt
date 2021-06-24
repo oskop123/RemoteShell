@@ -5,3 +5,6 @@ rm
 wc
 grep
 echo
+pwd
+which
+cd

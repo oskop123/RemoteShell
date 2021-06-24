@@ -4,8 +4,29 @@ import argparse
 import socket
 
 
-def client(host: str, port: str, use_sctp: bool = False, ipv6: bool = False, timeout: float = 5.0) -> int:
+def client(
+    host: str,
+	port: str,
+	use_sctp: bool = False,
+	ipv6: bool = False,
+	timeout: float = 5.0
+) -> int:
+	"""Main program to run client for remote shell execution
 
+	:param host: server name or ip address
+	:type host: str
+	:param port: port on which server listens, can be also name of the service
+	:type port: str
+	:param use_sctp: use SCTP transport protocol or not, defaults to False
+	:type use_sctp: bool, optional
+	:param ipv6: use IPv6 protocol, defaults to False
+	:type ipv6: bool, optional
+	:param timeout: timeout after which command is not more awaited, defaults to 5.0
+	:type timeout: float, optional
+	
+	:return: exit code
+	:rtype: int
+	"""
 	buffer_size = 4096
 	family = socket.AF_INET
 	transport_protocol = socket.IPPROTO_TCP
