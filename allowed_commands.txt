@@ -1,0 +1,7 @@
+cat
+ls
+touch
+rm
+wc
+grep
+echo
