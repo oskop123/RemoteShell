@@ -94,8 +94,8 @@ def handle_request(
 			sys.stdout.flush()
 			os.dup2(write_side, sys.stdout.fileno())
 			os.dup2(write_side, sys.stderr.fileno())
-			# os.execl("/bin/sh", "sh", "-ce", recv_data)
-			os.system(recv_data)
+			prep_cmd = recv_data.decode('utf-8') + ' && echo " "'
+			os.execl("/bin/sh", "sh", "-ce", prep_cmd)
 		except OSError as e:
 			logger.error(f'os.execl() error ({e.errno}): {e.strerror}')
 			os.write(write_side, b'Error during execution')

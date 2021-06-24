@@ -40,6 +40,8 @@ def server(
 	:param user: As which user run the daemonized program, defaults to os.getlogin()
 	:type user: str, optional
 	"""
+	buffer_size = 4096	
+
 	# Handle signals
 	signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
@@ -69,25 +71,22 @@ def server(
 	## end of logger setup
 
 	## building sockets
-	resolved_port = 0
-	try:
-		if isinstance(int(port), int):
-			resolved_port = int(port)
-		else:
-			resolved_port = socket.getservbyname(port)
-	except socket.gaierror as e:
-		logger.error(f"getservbyname() error ({e.errno}): {e.strerror}")
-		sys.exit(-2)
-
-	except ValueError as e:
-		print(f"{str(e)}")
-		sys.exit(-2)
-
-	epoll = select.epoll()
-
 	family = socket.AF_INET6
 	if ipv4_only:
 		family = socket.AF_INET
+
+	try:
+		resolved_port = socket.getaddrinfo(
+			host=None,
+			port=port,
+			family=family,
+			proto=socket.IPPROTO_TCP % socket.IPPROTO_SCTP
+		)[0][-1][1]
+	except socket.gaierror as e:
+		print(f"getaddrinfo() error ({e.errno}): {e.strerror}")
+		sys.exit(-2)
+
+	epoll = select.epoll()
 
 	try:
 		listen_sockets = [
@@ -97,7 +96,7 @@ def server(
 	except OSError as e:
 		print(f'socket() error ({e.errno}): {e.strerror}')
 		sys.exit(-1)
-	
+
 	for sock in listen_sockets:
 		try:
 			if not ipv4_only:
@@ -160,7 +159,14 @@ def server(
 					if os.fork():
 						# parent closes pipe
 						os.close(write_side)
-						CONN[fd].send(os.read(read_side, 100))
+						data = b''
+						while True:
+								tmp = os.read(read_side, buffer_size)
+								if len(tmp):
+									data += tmp
+								else:
+									break
+						CONN[fd].sendall(data)
 						os.close(read_side)
 						epoll.modify(CONN[fd], select.EPOLLIN)
 					else:

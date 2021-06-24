@@ -49,16 +49,21 @@ optional arguments:
 ### `client.py`
 
 ```
-usage: client.py [-h] [-S] [-6] [--host HOST] [--port PORT]
+usage: client.py [-h] [-S] [-6] [-b BUFFER_SIZE] [-t TIMEOUT] [--host HOST]
+                 [--port PORT]
 
 Client for remote shell
 
 optional arguments:
-  -h, --help      show this help message and exit
-  -S, --use-sctp  use SCTP as transport protocol
-  -6, --ipv6      use IPv6 address family
-  --host HOST     server address or domain name
-  --port PORT     server port or service name
+  -h, --help            show this help message and exit
+  -S, --use-sctp        use SCTP as transport protocol
+  -6, --ipv6            use IPv6 address family
+  -b BUFFER_SIZE, --buffer-size BUFFER_SIZE
+                        define buffer size to read; defaults to 4096 bytes
+  -t TIMEOUT, --timeout TIMEOUT
+                        set timeout; defaults to 5.0 sec
+  --host HOST           server address or domain name
+  --port PORT           server port or service name
 ```
 
 ## Important

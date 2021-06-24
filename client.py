@@ -9,22 +9,25 @@ def client(
 	port: str,
 	use_sctp: bool = False,
 	ipv6: bool = False,
+	buffer_size: int = 4096,
 	timeout: float = 5.0
 ) -> int:
 	"""Main program to run client for remote shell execution
 
-	:param host: server name or ip address
+	:param host: Server name or ip address
 	:type host: str
-	:param port: port on which server listens, can be also name of the service
+	:param port: Port on which server listens, can be also name of the service
 	:type port: str
-	:param use_sctp: use SCTP transport protocol or not, defaults to False
+	:param use_sctp: Use SCTP transport protocol or not, defaults to False
 	:type use_sctp: bool, optional
-	:param ipv6: use IPv6 protocol, defaults to False
+	:param ipv6: Use IPv6 protocol, defaults to False
 	:type ipv6: bool, optional
-	:param timeout: timeout after which command is not more awaited, defaults to 5.0
+	:param buffer_size: Buffer size for recv and send 
+	:type buffer_size: int, optional
+	:param timeout: Timeout after which command is not more awaited, defaults to 5.0
 	:type timeout: float, optional
 	
-	:return: exit code
+	:return: Exit code
 	:rtype: int
 	"""
 	buffer_size = 4096
@@ -82,9 +85,7 @@ def client(
 
 			try:
 				data = sock.recv(buffer_size)
-				if len(data) == 0:
-					continue
-				print(data.decode('utf-8'))
+				print(data.decode('utf-8').strip(' \n'))
 
 			except socket.timeout as e:
 				print("Request timeout..")
@@ -110,12 +111,22 @@ if __name__ == "__main__":
                                      description="Client for remote shell")
     parser.add_argument(
         '-S', '--use-sctp',
-        help="use SCTP as transport protocol",
+        help='use SCTP as transport protocol',
         action='store_true')
     parser.add_argument(
         '-6', '--ipv6',
         help="use IPv6 address family",
         action='store_true')
+    parser.add_argument(
+		'-b', '--buffer-size',
+		default=4096,
+		help='define buffer size to read; defaults to 4096 bytes'
+	)
+    parser.add_argument(
+		'-t', '--timeout',
+		default=5.0,
+		help='set timeout; defaults to 5.0 sec'
+	)
     parser.add_argument('--host',
                         default='localhost',
                         help="server address or domain name")
@@ -124,6 +135,12 @@ if __name__ == "__main__":
                         help="server port or service name")
     arguments = parser.parse_args()
 
-    return_code = client(arguments.host, arguments.port,
-                         arguments.use_sctp, arguments.ipv6)
+    return_code = client(
+        arguments.host,
+		arguments.port,
+		arguments.use_sctp,
+		arguments.ipv6,
+		arguments.buffer_size,
+		arguments.timeout
+	)
     sys.exit(return_code)
