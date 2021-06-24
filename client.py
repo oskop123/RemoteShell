@@ -55,26 +55,29 @@ def client(host: str, port: str, use_sctp: bool = False, ipv6: bool = False, tim
 				print(f"sendall() error ({e.errno}): {e.strerror}")
 				return -3
 
-			data = ''
-			while True:
-				try:
-					data = sock.recv(buffer_size)
-					if len(data) == 0:
-						break
-					print(data.decode('utf-8'))
-
-				except OSError as e:
-					print(f"sendall() error({e.errno}): {e.strerror}")
-					return -3
-
-				except socket.timeout as e:
-					print("Command execution timeout")
+			try:
+				data = sock.recv(buffer_size)
+				if len(data) == 0:
 					break
+				print(data.decode('utf-8'))
+
+			except OSError as e:
+				print(f"sendall() error({e.errno}): {e.strerror}")
+				return -3
+
+			except socket.timeout as e:
+				print("Command execution timeout")
+				break
 				
-	except KeyboardInterrupt as e:
+	except KeyboardInterrupt:
+		print(" Keyboard Interrupt")
+		sock.close()
+		return 255
+
+	except EOFError:
+		print("Safely Closing")
 		sock.close()
 		return 0
-
 
 if __name__ == "__main__":
 
@@ -88,10 +91,10 @@ if __name__ == "__main__":
         '-6', '--ipv6',
         help="use IPv6 address family",
         action='store_true')
-    parser.add_argument('host',
+    parser.add_argument('--host',
                         default='localhost',
                         help="server address or domain name")
-    parser.add_argument('port',
+    parser.add_argument('--port',
                         default='5001',
                         help="server port or service name")
     arguments = parser.parse_args()
