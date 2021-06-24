@@ -21,7 +21,9 @@ There are two scripts that allow for communication:
 ### `server.py`
 
 Default `HOST` and `PORT` values, that server is bound to, are:
+
 `HOST`: '' => '0.0.0.0' for IPv4 or '*' for IPv6
+
 `PORT`: 5001
 
 ```
@@ -65,13 +67,15 @@ optional arguments:
 On default there is no allowed commands, but the file can be added like this:
 
 > name_of_the_file.txt
-    cat
-    ls
-    touch
-    rm
-    wc
-    grep
-    echo
-    pwd
+```
+cat
+ls
+touch
+rm
+wc
+grep
+echo
+pwd
+```
 
 Also main program (`server.py`) if daemonized will try to move `uid, gid, euid, egid` to user specified by `-u` flag. On default it is set to `student`. The change is needed if you try to run it without user `student` on your system. 
